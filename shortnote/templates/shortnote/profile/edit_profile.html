@@ -13,7 +13,7 @@ Edit Profile
                 {% if user.profile_image %}
                     <img src="{{ user.profile_image.url }}" alt="Current Profile Picture" class="img-fluid rounded-circle mb-3" style="max-width: 200px;">
                 {% else %}
-                    <img src="{% static 'shortnote/user_images/default.jpg' %}" alt="Default Profile Picture" class="img-fluid rounded-circle mb-3" style="max-width: 200px;">
+                    <img src="{% static 'user_images/default.jpg' %}" alt="Default Profile Picture" class="img-fluid rounded-circle mb-3" style="max-width: 200px;">
                 {% endif %}
             {% endif %}
             <div class="mt-3">

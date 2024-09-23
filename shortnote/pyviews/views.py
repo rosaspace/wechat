@@ -1,7 +1,7 @@
 from django.shortcuts import render
-
+from ..models import Friend
 
 def index(request):
-    friend = request.GET.get('friend')
-    context = {'friend': friend} if friend else {}
-    return render(request, "shortnote/index.html", context)
+    user = request.user
+    print(user)
+    return render(request, "shortnote/index.html")

@@ -50,8 +50,6 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [("redis", 6379)],
-            # "hosts": [('127.0.0.1', 6379)],
-            # "hosts": [('redis', 6379)],
         },
     },
 }
@@ -154,7 +152,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-SHOW_IMAGE = False  # or False depending on your logic
+SHOW_IMAGE = True  # or False depending on your logic
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -168,4 +166,3 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'jing.li2019@hotmail.com'  # Replace with your email
 EMAIL_HOST_PASSWORD = 'mengxiang0425'  # Replace with your email password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-# EMAIL_DEBUG = True  # Add this line to enable debugging

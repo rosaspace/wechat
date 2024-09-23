@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
         integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     {% if showImage %}
-    <link rel="icon" href="{% static 'sounds/favicon.ico' %}" type="image/x-icon">
+    <link rel="icon" href="{% static 'icons/favicon.ico' %}" type="image/x-icon">
     {% endif %}
     <link rel="manifest" href="{% static 'manifest.json' %}">
     <style>
@@ -20,29 +20,28 @@
         }
     </style>
 </head>
-
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="collapse navbar-collapse" id="navbarNav">            
             <ul class="navbar-nav mr-auto">
-                {% if user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}"
                         href="{% url 'index' %}">WeChat</a>
+                </li> 
+                {% if user.is_authenticated %}                
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'load_note' %}active{% endif %}"
+                        href="{% url 'load_note' %}">Notes</a>
                 </li>
-                {% endif %}
-            </ul>
-            <ul class="navbar-nav">
-                {% if user.is_authenticated %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         {% if showImage %}
-                        <img src="{{ user.profile_image.url|default:'/static/shortnote/user_images/default.jpg' }}"
+                        <img src="{{ user.profile_image.url|default:'/static/user_images/default.jpg' }}"
                             alt="{{ user.username }}" class="rounded-circle mr-2"
                             style="width: 30px; height: 30px; object-fit: cover;">
                         {% endif %}
@@ -66,7 +65,7 @@
                         href="{% url 'register' %}">Register</a>
                 </li>
                 {% endif %}
-            </ul>
+            </ul>            
         </div>
     </nav>
 

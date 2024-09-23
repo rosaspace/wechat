@@ -1,0 +1,30 @@
+{% extends "shortnote/layout.html" %}
+
+{% block body %}
+<div class="container">
+    {% if note %}
+        <h2 class="mb-4">Edit Note</h2>
+    {% else %}
+        <h2 class="mb-4">Add New Note</h2>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ note.title|default:'' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="content">Content</label>
+            <textarea class="form-control" id="content" name="content" rows="5" required>{{ note.content|default:'' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            {% if note %}
+                Update Note
+            {% else %}
+                Add Note
+            {% endif %}
+        </button>
+        <a href="{% url 'load_note' %}" class="btn btn-secondary">Return</a>
+    </form>
+</div>
+{% endblock %}

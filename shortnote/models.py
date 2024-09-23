@@ -4,8 +4,8 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     profile_image = models.ImageField(
-        upload_to="static/shortnote/user_images/",
-        default="static/shortnote/user_images/default.jpg"
+        upload_to="shortnote/static/user_images/",
+        default="shortnote/static/user_images/default.jpg"
     )
     bio = models.TextField(max_length=500, blank=True)
     location = models.CharField(max_length=100, blank=True)
@@ -13,6 +13,21 @@ class User(AbstractUser):
     friends = models.ManyToManyField(
         "self", symmetrical=False, related_name="friend_of"
     )
+
+class Note(models.Model):
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notes")
+    # If you want to use the category model, uncomment the following line
+    # category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='notes')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ["-created_at"]
 
 
 class Friend(models.Model):

@@ -92,38 +92,7 @@ def load_chat(request):
         status=400
     )
 
-
-@login_required
-def load_friends(request):
-    if request.method == "GET":
-        try:
-            user = request.user
-            friends = (
-                Friend.objects.filter(user=user)
-                .select_related("friend")
-                .exclude(friend=user)
-            )
-            friend_list = [
-                {
-                    "username": friend.friend.username,
-                    "email": friend.friend.email
-                }
-                for friend in friends
-            ]
-
-            return JsonResponse({"success": True, "friends": friend_list})
-        except Exception as e:
-            return JsonResponse(
-                {"success": False, "error": str(e)},
-                status=500
-            )
-
-    return JsonResponse(
-        {"success": False, "error": "Invalid request method"},
-        status=400
-    )
-
-
+# abandon
 @login_required
 def load_new_chat(request):
     if request.method == "GET":

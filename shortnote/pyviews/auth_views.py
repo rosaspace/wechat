@@ -90,15 +90,18 @@ def edit_profile(request):
             fs = FileSystemStorage()
             file_extension = profile_picture.name.split(".")[-1]
 
+            # image path
             file_path = (
-                f"static/shortnote/user_images/"
+                f"shortnote/static/user_images/"
                 f"{user.username}.{file_extension}"
             )
             if fs.exists(file_path):
                 fs.delete(file_path)
             fs.save(file_path, profile_picture)
+            
+            # DB path
             user.profile_image = (
-                f"static/shortnote/user_images/{user.username}.{file_extension}"
+                f"static/user_images/{user.username}.{file_extension}"
             )
 
         user.save()
@@ -142,10 +145,72 @@ def friends(request):
             ),
         }
         friend_data.append(friend_info)
-
     return render(
         request, "shortnote/profile/friends.html", {"friends": friend_data}
     )
+
+@login_required
+def friendsData(request):
+    if request.method == "GET":
+        try:
+            user = request.user
+            friends = (
+                Friend.objects.filter(user=user)
+                .select_related("friend")
+                .exclude(friend=user)
+            )
+            friend_list = [
+                {
+                    "username": friend.friend.username,
+                    "email": friend.friend.email,
+                    "profile_image": (
+                        friend.friend.profile_image.url
+                        if friend.friend.profile_image
+                        else None
+                    ),
+                }
+                for friend in friends
+            ]
+
+            return JsonResponse({"success": True, "friends": friend_list})
+        except Exception as e:
+            return JsonResponse(
+                {"success": False, "error": str(e)},
+                status=500
+            )
+
+    return JsonResponse(
+        {"success": False, "error": "Invalid request method"},
+        status=400
+    )
+
+# abandon
+@login_required
+def selfData(request):
+    if request.method == "GET":
+        try:
+            user = request.user
+            self_data = {
+                "username": user.username,
+                "email": user.email,
+                "profile_image": (
+                    user.profile_image.url
+                    if user.profile_image
+                    else None
+                ),
+            }
+
+            return JsonResponse({"success": True, "self": self_data})
+        except Exception as e:
+            return JsonResponse(
+                {"success": False, "error": str(e)},
+                status=500
+            )
+
+    return JsonResponse(
+        {"success": False, "error": "Invalid request method"},
+        status=400
+    )   
 
 
 @login_required

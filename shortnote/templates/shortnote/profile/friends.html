@@ -35,7 +35,7 @@ Friends
                 {% for friend in friends %}
                 <li class="list-group-item friend-item" data-friend-username="{{ friend.username }}" data-friend-email="{{ friend.email }}" data-friend-bio="{{ friend.bio }}" data-friend-location="{{ friend.location }}" data-friend-image="{{ friend.profile_image|default:'static/shortnote/user_images/default.jpg' }}">
                     {% if showImage %}
-                    <img src="{{ friend.profile_image|default:'static/shortnote/user_images/default.jpg' }}"
+                    <img src="{{ friend.profile_image|default:'static/user_images/default.jpg' }}"
                         alt="{{ friend.username }}" class="rounded-circle mr-2"
                         style="width: 30px; height: 30px; object-fit: cover;">
                     {% endif %}
