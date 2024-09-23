@@ -1,1 +1,1 @@
-web: daphne -b 0.0.0.0 -p $PORT capstone.asgi:application
+web: daphne capstone.asgi:application --port $PORT --bind 0.0.0.0
