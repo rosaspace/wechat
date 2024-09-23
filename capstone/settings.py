@@ -47,15 +47,25 @@ INSTALLED_APPS = [
 
 ASGI_APPLICATION = "capstone.asgi.application"
 
-CHANNEL_LAYERS = {
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             # "hosts": [("redis", 6379)],  # docker
+#             # "hosts": [('127.0.0.1', 6379)],  # localhost WSL
+#             "hosts": [os.environ.get('REDIS_URL')],
+#         },
+#     },
+# }
+
+CACHES = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            # "hosts": [("redis", 6379)],  # docker
-            # "hosts": [('127.0.0.1', 6379)],  # localhost WSL
-            "hosts": [os.environ.get('REDIS_URL')],
-        },
-    },
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get('REDIS_URL'),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
 }
 
 MIDDLEWARE = [
