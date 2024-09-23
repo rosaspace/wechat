@@ -11,6 +11,9 @@ WORKDIR /usr/src/app
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
+# Collect static files (for Django)
+RUN python manage.py collectstatic --noinput
+
 # Expose the port used by Daphne
 EXPOSE 8888
 
