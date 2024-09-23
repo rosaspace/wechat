@@ -334,7 +334,8 @@ WeChat
         }
     }
 
-    const socket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+    let ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const socket = new WebSocket(ws_scheme + '://' + window.location.host + '/ws/chat/');
 
     socket.onmessage = function (e) {
         const data = JSON.parse(e.data);

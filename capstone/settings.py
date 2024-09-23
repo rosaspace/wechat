@@ -28,6 +28,8 @@ DEBUG = False
 # ALLOWED_HOSTS = ["129.80.201.9", "localhost", "127.0.0.1", "10.0.0.132","129.213.179.136","onlinetools.life","www.onlinetools.life"]
 ALLOWED_HOSTS = ['*']  # Not recommended for production
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Application definition
 
 INSTALLED_APPS = [
