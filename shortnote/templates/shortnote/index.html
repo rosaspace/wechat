@@ -1,0 +1,396 @@
+{% extends "shortnote/layout.html" %}
+{% load static %}
+
+{% block title %}
+WeChat
+{% endblock %}
+
+{% block body %}
+{% if user.is_authenticated %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Chat List (Left Side) -->
+        <div class="col-md-3 border-right">
+            <ul class="list-group" id="friends-list">
+                <!-- Friends list will be loaded here -->
+            </ul>
+        </div>
+
+        <!-- Chat Content and Input (Right Side) -->
+        <div class="col-md-9">
+            <!-- Chat Content (Right Top) -->
+            <div id="chat-container" style="display: none;">
+                <div id="chat-content" class="chat-content" style="height: 70vh; overflow-y: auto;">
+                </div>
+
+                <!-- Text Input and Send Button (Right Bottom) -->
+                <div class="input-group mt-3">
+                    <textarea id="chat-input" class="form-control" rows="3"
+                        placeholder="Type your message..."></textarea>
+                    <div class="input-group-append">
+                        <button id="send-chat" class="btn btn-primary" type="button">Send</button>
+                    </div>
+                </div>
+            </div>
+            <div id="no-chat-selected"
+                style="height: 70vh; display: flex; justify-content: center; align-items: center;">
+                <p>Select a chat to start messaging</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h2 class="mt-5">Welcome to WeChat</h2>
+            <p class="lead">Please log in to access the chat features.</p>
+            <a href="{% url 'login' %}" class="btn btn-primary">Log In</a>
+            <p class="mt-3">Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+    let allChats = [];
+    let currentFriend = '';
+    let currentUser = '';
+    let chatInput;
+    let newMessageSound;
+    var showImage = {{ showImage|yesno:"true,false" }};
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const currentUserMeta = document.querySelector('meta[name="current-user"]');
+        currentUser = currentUserMeta.getAttribute('content');
+        if (showImage) {
+            newMessageSound = new Audio('{% static "sounds/new_message.mp3" %}');
+        }
+
+        chatInput = document.getElementById('chat-input');
+        const sendChatBtn = document.getElementById('send-chat');
+
+        if (sendChatBtn) {
+            sendChatBtn.addEventListener('click', sendMessage);
+        }
+
+        if (chatInput) {
+            chatInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            chatInput.addEventListener('focus', function() {
+                if (currentFriend) {
+                    hideRedCircle(currentFriend);
+                }
+            });
+        }
+
+        // Get the 'friend' parameter from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        currentFriend = urlParams.get('friend');
+
+        if (currentUser) {
+            loadFriendsList();
+            loadAllChats();
+        }
+    });
+
+    function loadAllChats() {
+        fetch('/load_chat', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    allChats = data.chat_data;
+                    if (currentFriend) {
+                        loadChatContent(currentFriend);
+                    }
+                    // Update lastMessageTimestamp after loading all chats
+                    if (allChats.length > 0) {
+                        lastMessageTimestamp = allChats[allChats.length - 1].timestamp;
+                    }
+                } else {
+                    console.error('Error loading all chats:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading all chats:', error);
+            });
+    }
+
+    function loadFriendsList() {
+        fetch('/load_friends', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const friendsList = document.getElementById('friends-list');
+                    if (friendsList) {
+                        friendsList.innerHTML = '';
+                        if (data.friends && data.friends.length > 0) {
+                            data.friends.forEach(friend => {
+                                const listItem = document.createElement('li');
+                                listItem.className = 'list-group-item d-flex align-items-center position-relative';
+                                if (showImage) {
+                                    listItem.innerHTML = `
+                                        <img src="${friend.profile_image || '/static/shortnote/user_images/default.jpg'}" alt="${friend.username}" class="rounded-circle mr-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                        <span>${friend.username}</span>
+                                        <span class="notification-circle position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; background-color: red; border-radius: 50%; display: none;"></span>
+                                    `;
+                                } else {
+                                    listItem.innerHTML = `
+                                        <span>${friend.username}</span>
+                                        <span class="notification-circle position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; background-color: red; border-radius: 50%; display: none;"></span>
+                                    `;
+                                }
+                                listItem.addEventListener('click', () => {
+                                    friendsList.querySelectorAll('.list-group-item').forEach(item => {
+                                        item.classList.remove('active');
+                                    });
+                                    listItem.classList.add('active');
+                                    currentFriend = friend.username;
+                                    loadChatContent(friend.username);
+                                    // Hide the red circle when the chat is opened
+                                    listItem.querySelector('.notification-circle').style.display = 'none';
+                                    // Show chat container and hide no-chat-selected message
+                                    document.getElementById('chat-container').style.display = 'block';
+                                    document.getElementById('no-chat-selected').style.display = 'none';
+                                });
+                                friendsList.appendChild(listItem);
+                                
+                                // If this friend matches the URL parameter, select it
+                                if (friend.username === currentFriend) {
+                                    listItem.click();
+                                }
+                            });
+                        } else {
+                            friendsList.innerHTML = '<li class="list-group-item">No friends found</li>';
+                        }
+                    }
+                } else {
+                    console.error('Error loading friends:', data.error);
+                    const friendsList = document.getElementById('friends-list');
+                    if (friendsList) {
+                        friendsList.innerHTML = '<li class="list-group-item text-danger">Error loading friends</li>';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading friends:', error);
+                const friendsList = document.getElementById('friends-list');
+                if (friendsList) {
+                    friendsList.innerHTML = '<li class="list-group-item text-danger">Error loading friends</li>';
+                }
+            });
+    }
+
+    function loadChatContent(friendUsername) {
+        console.log('Displaying chat with:', friendUsername);
+        const chatContainer = document.getElementById('chat-container');
+        const noChatSelected = document.getElementById('no-chat-selected');
+        const chatContentDiv = document.querySelector('.chat-content');
+
+        if (chatContainer && noChatSelected && chatContentDiv) {
+            chatContainer.style.display = 'block';
+            noChatSelected.style.display = 'none';
+            chatContentDiv.innerHTML = '';
+
+            if (allChats && allChats.length > 0) {
+                allChats.forEach(message => {
+                    if ((message.sender === currentUser && message.receiver === friendUsername) ||
+                        (message.receiver === currentUser && message.sender === friendUsername)
+                    ) {
+                        const type = message.sender === currentUser ? 'sent' : 'received';
+                        addMessageToChat(message.content, message.timestamp, type);
+                    }
+                });
+                lastMessageTimestamp = allChats[allChats.length - 1].timestamp;
+            }
+        }
+
+        hideRedCircle(friendUsername);
+    }
+
+    function addMessageToChat(content, timestamp, type) {
+        const chatContentDiv = document.querySelector('.chat-content');
+        if (chatContentDiv) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            const time = new Date(timestamp).toLocaleTimeString();
+            let userImage = '';
+            if (showImage) {
+                userImage = type === 'received' ?
+                    `<img src="${currentFriend.profile_image || '/static/shortnote/user_images/default.jpg'}" alt="${currentFriend}" class="rounded-circle mr-2" style="width: 30px; height: 30px; object-fit: cover;">` :
+                    `<img src="${currentUser.profile_image || '/static/shortnote/user_images/default.jpg'}" alt="${currentUser}" class="rounded-circle mr-2" style="width: 30px; height: 30px; object-fit: cover;">`;
+            }
+            messageDiv.innerHTML = `${userImage}<span class="time">${time}</span> <strong>${type === 'received' ? currentFriend : currentUser}:</strong>`;
+            messageDiv.innerHTML += `<br>${content}`;
+            messageDiv.style.textAlign = type === 'received' ? 'left' : 'right';
+            chatContentDiv.appendChild(messageDiv);
+            chatContentDiv.scrollTop = chatContentDiv.scrollHeight;
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function sendMessage() {
+        const message = chatInput ? chatInput.value.trim() : '';
+        if (message && currentFriend) {
+            fetch(`/send_chat/${currentFriend}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    friend_id: currentFriend,
+                    chat_content: message
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (chatInput) chatInput.value = '';
+
+                        const timestamp = new Date().toISOString();
+                        addMessageToChat(message, timestamp, 'sent');
+                        sendMessageToUser(message, timestamp);
+                        allChats.push({
+                            content: message,
+                            timestamp: new Date().toISOString(),
+                            sender: currentUser,
+                            receiver: currentFriend
+                        });
+                    }
+                })
+                .catch(error => console.error('Error sending message:', error));
+        }
+    }
+
+    function hideRedCircle(friendUsername)
+    {
+        // Hide the red notification circle for the selected friend
+        const friendsList = document.getElementById('friends-list');
+        const selectedFriend = Array.from(friendsList.querySelectorAll('li')).find(li => li.textContent.includes(friendUsername));
+        if (selectedFriend) {
+            const notificationCircle = selectedFriend.querySelector('.notification-circle');
+            if (notificationCircle) {
+                notificationCircle.style.display = 'none';
+            }
+        }
+    }
+
+    function showRedCircle(sender)
+    {
+        // Show the new message indicator for the friend who sent the message
+        const friendsList = document.getElementById('friends-list');
+        if (friendsList) {
+            const friendListItem = Array.from(friendsList.querySelectorAll('li')).find(li => li.textContent.includes(sender));
+            if (friendListItem) {
+                const notificationCircle = friendListItem.querySelector('.notification-circle');
+                if (notificationCircle) {
+                    notificationCircle.style.display = 'block';
+                }
+            }
+        }
+    }
+
+    const socket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+
+    socket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        const receivedUser = data.received;
+        const sender = data.sender;
+        const timestamp = data.timestamp;
+        console.log("received message : ", data.message, " From : ", sender, " To : ", receivedUser)
+
+        allChats.push({
+            content: data.message,
+            timestamp: timestamp,
+            sender: sender,
+            receiver: receivedUser
+        });
+
+        if (currentFriend === sender) {
+            addMessageToChat(data.message, data.timestamp, 'received')
+            if (showImage && newMessageSound) {
+                newMessageSound.play();
+            }
+            // Hide red circle when the chat is in focus
+            if (document.activeElement === chatInput) {
+                hideRedCircle(sender);
+            } else {
+                showRedCircle(sender);
+            }
+        } else {
+            showRedCircle(sender);
+        }
+    };
+
+    socket.onclose = function (event) {
+        if (event.wasClean) {
+            console.log(`Closed cleanly, code=${event.code}, reason=${event.reason}`);
+        } else {
+            console.error('WebSocket connection unexpectedly closed');
+        }
+    };
+
+    socket.onerror = function (error) {
+        console.error('WebSocket error:', error);
+    };
+
+    function sendMessageToUser(content, timestamp) {
+        console.log("send message : ", content)
+        socket.send(JSON.stringify({
+            'message': content,
+            'received': currentFriend,
+            'sender': currentUser,
+            'timestamp': timestamp
+        }));
+    }
+
+    function leaveChat() {
+        if (socket.readyState === WebSocket.OPEN) {
+            socket.close(1000, 'Chat ended');  // Close the connection with a status code and reason
+        }
+    }
+
+</script>
+{% endblock %}

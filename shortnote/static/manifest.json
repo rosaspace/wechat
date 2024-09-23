@@ -1,0 +1,30 @@
+{
+  "name": "WeChat",
+  "short_name": "wechat",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/static/icons/favicon.ico",
+      "type": "image/png",
+      "sizes": "200x200"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/icons/favicon.ico",
+      "sizes": "1024x1024",
+      "type": "image/gif",
+      "form_factor": "wide",
+      "label": "Application"
+    },
+    {
+      "src": "/static/icons/favicon.ico",
+      "sizes": "1024x1024",
+      "type": "image/gif",
+      "label": "Application"
+    }
+  ]
+}

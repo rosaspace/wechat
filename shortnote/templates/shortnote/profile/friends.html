@@ -1,0 +1,183 @@
+{% extends "shortnote/layout.html" %}
+{% load static %}
+
+{% block title %}
+Friends
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    
+    <div class="row">
+        <!-- Add Friend (Top Side) -->
+        <div class="col-md-12 mb-3">
+            <h3>Add Friend</h3>
+            <div class="d-flex justify-content-between align-items-center p-3" style="background-color: #f8f9fa; width: 100%;">
+                <div class="input-group" style="width: 100%;">
+                    <input type="email" id="friend-email-input" placeholder="Enter friend's email" class="form-control" style="border-radius: 20px 0 0 20px;">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" id="add-friend-btn" style="border-radius: 0 20px 20px 0;">Add Friend</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="friend-add-message" class="alert" style="display: none;"></div>
+
+    <hr>    
+
+    <div class="row">
+        <!-- Friend List (Left Side) -->
+        <div class="col-md-4 border-right">
+            <h3>Friends</h3>
+            <ul class="list-group" id="friends-list">
+                {% for friend in friends %}
+                <li class="list-group-item friend-item" data-friend-username="{{ friend.username }}" data-friend-email="{{ friend.email }}" data-friend-bio="{{ friend.bio }}" data-friend-location="{{ friend.location }}" data-friend-image="{{ friend.profile_image|default:'static/shortnote/user_images/default.jpg' }}">
+                    {% if showImage %}
+                    <img src="{{ friend.profile_image|default:'static/shortnote/user_images/default.jpg' }}"
+                        alt="{{ friend.username }}" class="rounded-circle mr-2"
+                        style="width: 30px; height: 30px; object-fit: cover;">
+                    {% endif %}
+                    {{ friend.username }}
+                </li>
+                {% empty %}
+                <li class="list-group-item">No friends yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Friend Information (Right Side) -->
+        <div class="col-md-8" id="friend-info-container">
+            <div class="row">
+                <div class="col-md-12 d-flex justify-content-center align-items-center">
+                    <div id="friend-info" style="display: none; max-width: 500px;">
+                        <div class="text-center mb-4">
+                            {% if showImage %}
+                            <img id="friend-image" src="" alt="Friend's profile picture"
+                                class="img-fluid rounded-circle mb-3" style="max-width: 200px; width: 100%;">
+                            {% endif %}
+                            <h3 id="friend-name"></h3>
+                        </div>
+                        <p><strong>Email:</strong> <span id="friend-email"></span></p>
+                        <p><strong>Username:</strong> <span id="friend-username"></span></p>
+                        <p><strong>Location:</strong> <span id="friend-location"></span></p>
+                        <p><strong>Bio:</strong> <span id="friend-bio"></span></p>
+                        <div class="mt-3 text-center">
+                            <a id="chat-link" href="#" class="btn btn-primary mr-2">Chat with Friend</a>
+                            <a id="email-link" href="#" class="btn btn-info" style="display: none;">Send an Email</a>
+                        </div>
+                    </div>
+                    <div id="no-friend-selected"
+                        style="display: flex; justify-content: center; align-items: center; height: 300px;">
+                        <p>Select a friend to view their information</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var showImage = {{ showImage|yesno:"true,false" }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const addFriendBtn = document.getElementById('add-friend-btn');
+        const friendEmailInput = document.getElementById('friend-email-input');
+        const friendAddMessage = document.getElementById('friend-add-message');
+        const friendsList = document.getElementById('friends-list');
+        const friendInfo = document.getElementById('friend-info');
+        const noFriendSelected = document.getElementById('no-friend-selected');
+        const chatLink = document.getElementById('chat-link');
+
+        addFriendBtn.addEventListener('click', function() {
+            const email = friendEmailInput.value.trim();
+            if (email) {
+                fetch('/add_friend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.state) {
+                        friendAddMessage.textContent = 'Friend added successfully!';
+                        friendAddMessage.className = 'alert alert-success';
+                        // Refresh the friends list
+                        location.reload();
+                    } else {
+                        friendAddMessage.textContent = data.message || 'Failed to add friend. Please try again.';
+                        friendAddMessage.className = 'alert alert-danger';
+                    }
+                    friendAddMessage.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    friendAddMessage.textContent = 'An error occurred. Please try again.';
+                    friendAddMessage.className = 'alert alert-danger';
+                    friendAddMessage.style.display = 'block';
+                });
+            }
+        });
+
+        friendsList.addEventListener('click', function(e) {
+            const friendItem = e.target.closest('.friend-item');
+            if (friendItem) {
+                // Remove 'active' class from all friend items
+                friendsList.querySelectorAll('.friend-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Add 'active' class to the clicked friend item
+                friendItem.classList.add('active');
+
+                const friendUsername = friendItem.dataset.friendUsername;
+                const friendEmail = friendItem.dataset.friendEmail;
+                const friendBio = friendItem.dataset.friendBio;
+                const friendLocation = friendItem.dataset.friendLocation;
+                const friendImage = friendItem.dataset.friendImage;
+
+                {% if showImage %}
+                document.getElementById('friend-image').src = friendImage;
+                {% endif %}
+                document.getElementById('friend-name').textContent = friendUsername;
+                document.getElementById('friend-email').textContent = friendEmail;
+                document.getElementById('friend-username').textContent = friendUsername;
+                document.getElementById('friend-location').textContent = friendLocation || 'Not specified';
+                document.getElementById('friend-bio').textContent = friendBio || 'No bio available';
+                chatLink.href = `{% url 'index' %}?friend=${friendUsername}`;
+                document.getElementById('email-link').href = `/compose_email/${friendEmail}/`;
+
+                friendInfo.style.display = 'block';
+                noFriendSelected.style.display = 'none';
+            }
+        });
+
+        chatLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            const friendUsername = document.getElementById('friend-username').textContent;
+            window.location.href = `{% url 'index' %}?friend=${friendUsername}`;
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}
