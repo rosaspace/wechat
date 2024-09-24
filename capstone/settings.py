@@ -51,8 +51,8 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("redis", 6379)],  # docker
-            # "hosts": [('127.0.0.1', 6379)],  # localhost WSL
+            # "hosts": [("redis", 6379)],  # docker
+            "hosts": [('127.0.0.1', 6379)],  # localhost WSL
             # "hosts": [os.environ.get('REDIS_URL')],
         },
     },
@@ -68,6 +68,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this line
 ]
+
+# Ensure that Whitenoise serves static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ROOT_URLCONF = "capstone.urls"
 
@@ -145,8 +148,6 @@ STATIC_URL = "/static/"
 # If you're serving static files in production, make sure STATIC_ROOT is set
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-# Ensure that Whitenoise serves static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # For local development, make sure this is set
 # STATICFILES_DIRS = [

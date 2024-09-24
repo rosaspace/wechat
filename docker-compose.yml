@@ -5,7 +5,7 @@ services:
     build: .
     environment:
       - DJANGO_SETTINGS_MODULE=capstone.settings
-    command: daphne -b 0.0.0.0 -p 8000 capstone.asgi:application
+    command: daphne -b 0.0.0.0 -p 8888 capstone.asgi:application
     volumes:
       - .:/app
     ports:

@@ -11,8 +11,11 @@ WORKDIR /usr/src/app
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
+# Collect static files (for Django)
+RUN python manage.py collectstatic --noinput
+
 # Expose the port used by Daphne
 EXPOSE 8888
 
 # CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "capstone.asgi:application"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8888", "capstone.asgi:application"]

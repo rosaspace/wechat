@@ -306,11 +306,11 @@ WeChat
         }
     }
 
-    function hideRedCircle(friendUsername)
+    function hideRedCircle(sender)
     {
         // Hide the red notification circle for the selected friend
         const friendsList = document.getElementById('friends-list');
-        const selectedFriend = Array.from(friendsList.querySelectorAll('li')).find(li => li.textContent.includes(friendUsername));
+        const selectedFriend = Array.from(friendsList.querySelectorAll('li')).find(li => li.textContent.includes(sender));
         if (selectedFriend) {
             const notificationCircle = selectedFriend.querySelector('.notification-circle');
             if (notificationCircle) {
@@ -351,8 +351,10 @@ WeChat
             receiver: receivedUser
         });
 
-        if (currentFriend.username === sender) {
-            addMessageToChat(data.message, data.timestamp, 'received')
+        if (currentUser === receivedUser) {
+            if(currentFriend.username === sender){
+                addMessageToChat(data.message, data.timestamp, 'received');
+            }
             if (showImage && newMessageSound) {
                 newMessageSound.play();
             }
@@ -362,8 +364,6 @@ WeChat
             } else {
                 showRedCircle(sender);
             }
-        } else {
-            showRedCircle(sender);
         }
     };
 

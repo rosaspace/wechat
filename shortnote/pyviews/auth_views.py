@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, JsonResponse
@@ -7,6 +8,7 @@ from django.db import IntegrityError
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 
 from ..models import Friend, User
 
@@ -83,7 +85,18 @@ def edit_profile(request):
         user.email = request.POST.get("email", user.email)
         user.bio = request.POST.get("bio", user.bio)
         user.location = request.POST.get("location", user.location)
-        user.birth_date = request.POST.get("birth_date", user.birth_date)
+        birth_date = request.POST.get("birth_date", user.birth_date)
+
+        # Validate birth_date format
+        try:
+            birth_date = datetime.strptime(birth_date, '%Y-%m-%d').date()
+            user.birth_date = birth_date
+        except ValueError:
+            messages.error(request, "Birth date must be in YYYY-MM-DD format.")
+            return render(
+                request,
+                "shortnote/profile/edit_profile.html"
+            )
 
         if "profile_picture" in request.FILES:
             profile_picture = request.FILES["profile_picture"]
