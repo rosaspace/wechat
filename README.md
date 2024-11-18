@@ -160,4 +160,11 @@ This project is licensed under the MIT License.
 Replace `yourusername/yourproject` with your actual GitHub repository link and `yourproject` with the actual name of your Django project. This template covers the basic setup and instructions for both local development and Docker-based deployment.
 ```
 
+## Publish Link
+https://onlinetools.life/
+
+Account Pass
+user1 user1
+user2 user2
+user3 user3
 
